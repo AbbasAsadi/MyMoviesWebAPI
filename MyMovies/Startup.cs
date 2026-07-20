@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using MyMovies.Data;
@@ -20,7 +21,8 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers().AddJsonOptions(options =>
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
         //Configure DBContext with SQL
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(ConnectionString));
@@ -49,6 +51,6 @@ public class Startup
 
         app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
 
-        // AppDbInitializer.Seed(app);
+        AppDbInitializer.Seed(app);
     }
 }

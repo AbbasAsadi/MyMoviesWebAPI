@@ -12,50 +12,17 @@ public class AppDbInitializer
 
             if (context != null && context.Movies.Any()) return;
 
-            context?.Directors.AddRange(
-                new Director
-                {
-                    FullName = "Martin Scorsizi",
-                },
-                new Director
-                {
-                    FullName = "Cristofer Nowlan"
-                },
-                new Director
-                {
-                    FullName = "Hooman Seyedi"
-                }
-            );
-            context?.Movies.AddRange(new Movie
-                {
-                    Title = "1st Movie Title",
-                    Rating = 4.7,
-                    Year = 1997,
-                },
-                new Movie
-                {
-                    Title = "2st Movie Title",
-                    Rating = 7.4,
-                    Year = 2014,
-                },
-                new Movie
-                {
-                    Title = "3st Movie Title",
-                    Rating = 8.6,
-                    Year = 2024,
-                }, new Movie
-                {
-                    Title = "4st Movie Title",
-                    Rating = 6.4,
-                    Year = 2023,
-                }, new Movie
-                {
-                    Title = "5st Movie Title",
-                    Rating = 8.4,
-                    Year = 2000,
-                }
-            );
+            var martin = new Director { FullName = "Martin Scorsese" };
+            var nolan = new Director { FullName = "Christopher Nolan" };
+            var hooman = new Director { FullName = "Hooman Seyedi" };
 
+            context.Movies.AddRange(
+                new Movie { Title = "Goodfellas", Rating = 8.7, Year = 1990, Director = martin },
+                new Movie { Title = "The Departed", Rating = 8.5, Year = 2006, Director = martin },
+                new Movie { Title = "Inception", Rating = 8.8, Year = 2010, Director = nolan },
+                new Movie { Title = "Interstellar", Rating = 8.6, Year = 2014, Director = nolan },
+                new Movie { Title = "Sheerak", Rating = 7.9, Year = 2023, Director = hooman }
+            );
 
             context.SaveChanges();
         }

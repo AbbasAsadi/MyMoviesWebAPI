@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MyMovies.Data.Model;
 using MyMovies.Data.ViewModels;
 
@@ -5,7 +6,7 @@ namespace MyMovies.Data.Service;
 
 public class MoviesService(AppDbContext _context)
 {
-    public Movie AddMovie(MovieVM movie)
+    public MovieResponseVM AddMovie(MovieVM movie)
     {
         var newMovie = new Movie
         {
@@ -17,26 +18,71 @@ public class MoviesService(AppDbContext _context)
         _context.Movies.Add(newMovie);
         _context.SaveChanges();
 
-        return newMovie;
+        _context.Entry(newMovie).Reference(m => m.Director).Load();
 
-
+        return new MovieResponseVM
+        {
+            Id = newMovie.Id,
+            Title = newMovie.Title,
+            Year = newMovie.Year,
+            Rating = newMovie.Rating,
+            Director = new DirectorVM
+            {
+                Id = newMovie.Director.Id,
+                FullName = newMovie.Director.FullName
+            }
+        };
     }
 
-    public List<Movie> GetAllMovie() => _context.Movies.ToList();
+    public List<MovieResponseVM> GetAllMovie()
+    {
+        return _context.Movies.Include(movie => movie.Director).Select(movie =>
+            new MovieResponseVM
+            {
+                Id = movie.Id,
+                Title = movie.Title,
+                Year = movie.Year,
+                Rating = movie.Rating,
+                Director = new DirectorVM
+                {
+                    Id = movie.Director.Id,
+                    FullName = movie.Director.FullName
+                }
+            }).ToList();
+    }
 
-    public Movie? GetMovieById(int movieId) => _context.Movies.FirstOrDefault(m => m.Id == movieId);
+    public MovieResponseVM GetMovieById(int movieId)
+    {
+        var movie = _context.Movies.Include(movie => movie.Director).FirstOrDefault(m => m.Id == movieId);
+        return movie == null
+            ? throw new Exception($"Movie with id {movieId} not found")
+            : new MovieResponseVM
+            {
+                Id = movie.Id,
+                Title = movie.Title,
+                Year = movie.Year,
+                Rating = movie.Rating,
+                Director = new DirectorVM
+                {
+                    Id = movie.Director.Id,
+                    FullName = movie.Director.FullName
+                }
+            };
+    }
 
     public void DeleteMovie(int movieId)
     {
-        var movie = GetMovieById(movieId);
-        if(movie == null) throw new Exception($"Movie with id {movie} not found");
+        var movie = _getMovieById(movieId);
+        if (movie == null) throw new Exception($"Movie with id {movieId} not found");
         _context.Movies.Remove(movie);
+        _context.SaveChanges();
     }
 
-    public Movie UpdateMovie(int movieId, MovieVM updatedMovie)
+
+    public MovieResponseVM UpdateMovie(int movieId, MovieVM updatedMovie)
     {
-        var movie = GetMovieById(movieId);
-        if(movie == null) throw new Exception($"Movie with id {movie} not found");
+        var movie = _getMovieById(movieId);
+        if (movie == null) throw new Exception($"Movie with id {movieId} not found");
 
         movie.Title = updatedMovie.Title;
         movie.Year = updatedMovie.Year;
@@ -44,7 +90,26 @@ public class MoviesService(AppDbContext _context)
         movie.Rating = updatedMovie.Rating;
 
         _context.SaveChanges();
-        return movie;
+        movie = _context.Movies
+            .Include(m => m.Director)
+            .FirstOrDefault(m => m.Id == movieId);
 
+        return new MovieResponseVM
+        {
+            Id = movie!.Id,
+            Title = movie.Title,
+            Year = movie.Year,
+            Rating = movie.Rating,
+            Director = new DirectorVM
+            {
+                Id = movie.Director.Id,
+                FullName = movie.Director.FullName
+            }
+        };
+    }
+
+    private Movie? _getMovieById(int movieId)
+    {
+        return _context.Movies.FirstOrDefault(m => m.Id == movieId);
     }
 }
