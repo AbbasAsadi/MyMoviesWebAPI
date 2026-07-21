@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MyMovies.Data.Model;
 using MyMovies.Data.Paging;
 using MyMovies.Data.ViewModels;
+using MyMovies.Exception;
 
 namespace MyMovies.Data.Service;
 
@@ -14,7 +15,7 @@ public class MoviesService(AppDbContext _context)
             Title = movie.Title,
             Year = movie.Year,
             Rating = movie.Rating,
-            DirectorId = movie.DirectorId,
+            DirectorId = movie.DirectorId
         };
         _context.Movies.Add(newMovie);
         _context.SaveChanges();
@@ -56,7 +57,6 @@ public class MoviesService(AppDbContext _context)
         if (sortBy != null && sortOrder != null)
         {
             if (sortOrder == "desc")
-            {
                 switch (sortBy)
                 {
                     case "title":
@@ -66,9 +66,7 @@ public class MoviesService(AppDbContext _context)
                         allMovie = allMovie.OrderByDescending(movie => movie.Rating);
                         break;
                 }
-            }
             else if (sortOrder == "asc")
-            {
                 switch (sortBy)
                 {
                     case "title":
@@ -78,7 +76,6 @@ public class MoviesService(AppDbContext _context)
                         allMovie = allMovie.OrderBy(movie => movie.Rating);
                         break;
                 }
-            }
         }
 
         var result = allMovie.Select(movie =>
@@ -103,7 +100,7 @@ public class MoviesService(AppDbContext _context)
     {
         var movie = _context.Movies.Include(movie => movie.Director).FirstOrDefault(m => m.Id == movieId);
         return movie == null
-            ? throw new Exception($"Movie with id {movieId} not found")
+            ? throw new NotFoundException($"Movie with id {movieId} not found")
             : new MovieResponseVM
             {
                 Id = movie.Id,
@@ -121,7 +118,7 @@ public class MoviesService(AppDbContext _context)
     public void DeleteMovie(int movieId)
     {
         var movie = _getMovieById(movieId);
-        if (movie == null) throw new Exception($"Movie with id {movieId} not found");
+        if (movie == null) throw new NotFoundException($"Movie with id {movieId} not found");
         _context.Movies.Remove(movie);
         _context.SaveChanges();
     }
@@ -130,7 +127,7 @@ public class MoviesService(AppDbContext _context)
     public MovieResponseVM UpdateMovie(int movieId, MovieVM updatedMovie)
     {
         var movie = _getMovieById(movieId);
-        if (movie == null) throw new Exception($"Movie with id {movieId} not found");
+        if (movie == null) throw new NotFoundException($"Movie with id {movieId} not found");
 
         movie.Title = updatedMovie.Title;
         movie.Year = updatedMovie.Year;

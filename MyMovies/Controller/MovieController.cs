@@ -30,15 +30,8 @@ public class MovieController(MoviesService moviesService) : ControllerBase
     [HttpGet("movies/{id}")]
     public IActionResult GetMovie(int id)
     {
-        try
-        {
-            var movies = moviesService.GetMovieById(id);
-            return Ok(movies);
-        }
-        catch (Exception e)
-        {
-            return NotFound(e.Message);
-        }
+        var movies = moviesService.GetMovieById(id);
+        return Ok(movies);
     }
 
     [HttpPost("movies")]
@@ -51,28 +44,14 @@ public class MovieController(MoviesService moviesService) : ControllerBase
     [HttpDelete("movies/{id}")]
     public IActionResult DeleteMovie(int id)
     {
-        try
-        {
-            moviesService.DeleteMovie(id);
-            return Ok();
-        }
-        catch (Exception e)
-        {
-            return NotFound(e.Message);
-        }
+        moviesService.DeleteMovie(id);
+        return Ok();
     }
 
     [HttpPut("movies/{id}")]
     public IActionResult UpdateMovie(int id, [FromBody] MovieVM movie)
     {
-        try
-        {
-            var result = moviesService.UpdateMovie(id, movie);
-            return Ok(result);
-        }
-        catch (Exception e)
-        {
-            return NotFound(e.Message);
-        }
+        var result = moviesService.UpdateMovie(id, movie);
+        return Ok(result);
     }
 }

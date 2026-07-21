@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyMovies.Data.ViewModels;
+using MyMovies.Exception;
 
 namespace MyMovies.Data.Service;
 
@@ -10,7 +11,7 @@ public class DirectorService(AppDbContext _context)
         var director = _context.Directors.Include(director => director.Movies)
             .FirstOrDefault(director => director.Id == directorId);
         return director == null
-            ? throw new Exception($"Director with id {directorId} not found")
+            ? throw new NotFoundException($"Director with id {directorId} not found")
             : director
                 .Movies
                 .Select(movie => new MovieResponseVM

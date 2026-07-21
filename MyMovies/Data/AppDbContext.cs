@@ -7,5 +7,4 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Movie> Movies { get; set; }
     public DbSet<Director> Directors { get; set; }
-
 }

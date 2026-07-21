@@ -10,14 +10,7 @@ public class DirectorController(DirectorService directorService) : ControllerBas
     [HttpGet("directors/{directorId}/movies")]
     public IActionResult GetAllMoviesByDirectorId(int directorId)
     {
-        try
-        {
-            var movies = directorService.GetAllMoviesByDirectorId(directorId);
-            return Ok(movies);
-        }
-        catch (Exception e)
-        {
-            return NotFound(e.Message);
-        }
+        var movies = directorService.GetAllMoviesByDirectorId(directorId);
+        return Ok(movies);
     }
 }
