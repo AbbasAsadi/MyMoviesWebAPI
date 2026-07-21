@@ -3,13 +3,15 @@ using MyMovies.Data.ViewModels;
 
 namespace MyMovies.Exception;
 
-public class GlobalExceptionHandler : IExceptionHandler
+public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         System.Exception exception,
         CancellationToken cancellationToken)
     {
+        logger.LogError(exception, "Exception occurred: {Message}", exception.Message);
+
         var statusCode = exception is NotFoundException ? 404 : 500;
 
         httpContext.Response.StatusCode = statusCode;
