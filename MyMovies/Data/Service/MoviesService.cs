@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyMovies.Data.Model;
+using MyMovies.Data.Paging;
 using MyMovies.Data.ViewModels;
 
 namespace MyMovies.Data.Service;
@@ -34,9 +35,53 @@ public class MoviesService(AppDbContext _context)
         };
     }
 
-    public List<MovieResponseVM> GetAllMovie()
+    public List<MovieResponseVM> GetAllMovie(
+        string? sortBy,
+        string? sortOrder,
+        int? year,
+        double? minRating,
+        int? pageNumber,
+        int? pageSize)
     {
-        return _context.Movies.Include(movie => movie.Director).Select(movie =>
+        var allMovie = _context
+            .Movies
+            .Include(movie => movie.Director)
+            .AsQueryable();
+
+
+        if (year != null) allMovie = allMovie.Where(movie => movie.Year == year);
+
+        if (minRating != null) allMovie = allMovie.Where(movie => movie.Rating > minRating);
+
+        if (sortBy != null && sortOrder != null)
+        {
+            if (sortOrder == "desc")
+            {
+                switch (sortBy)
+                {
+                    case "title":
+                        allMovie = allMovie.OrderByDescending(movie => movie.Title);
+                        break;
+                    case "rating":
+                        allMovie = allMovie.OrderByDescending(movie => movie.Rating);
+                        break;
+                }
+            }
+            else if (sortOrder == "asc")
+            {
+                switch (sortBy)
+                {
+                    case "title":
+                        allMovie = allMovie.OrderBy(movie => movie.Title);
+                        break;
+                    case "rating":
+                        allMovie = allMovie.OrderBy(movie => movie.Rating);
+                        break;
+                }
+            }
+        }
+
+        var result = allMovie.Select(movie =>
             new MovieResponseVM
             {
                 Id = movie.Id,
@@ -48,7 +93,10 @@ public class MoviesService(AppDbContext _context)
                     Id = movie.Director.Id,
                     FullName = movie.Director.FullName
                 }
-            }).ToList();
+            });
+
+
+        return PaginatedList<MovieResponseVM>.Create(result, pageNumber ?? 1, pageSize ?? 5);
     }
 
     public MovieResponseVM GetMovieById(int movieId)

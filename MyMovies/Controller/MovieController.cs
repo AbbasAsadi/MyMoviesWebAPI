@@ -9,9 +9,21 @@ namespace MyMovies.Controller;
 public class MovieController(MoviesService moviesService) : ControllerBase
 {
     [HttpGet("movies")]
-    public IActionResult GetAllMovies()
+    public IActionResult GetAllMovies(
+        string? sortBy,
+        string? sortOrder,
+        int? year,
+        double? minRating,
+        int? pageNumber,
+        int? pageSize)
     {
-        var movies = moviesService.GetAllMovie();
+        var movies = moviesService.GetAllMovie(
+            sortBy,
+            sortOrder,
+            year,
+            minRating,
+            pageNumber,
+            pageSize);
         return Ok(movies);
     }
 
