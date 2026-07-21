@@ -1,11 +1,13 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using MyMovies.Data.Service;
 using MyMovies.Data.ViewModels;
 
-namespace MyMovies.Controller;
+namespace MyMovies.Controller.V1;
 
-[Route("api/[controller]")]
 [ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class MovieController(MoviesService moviesService) : ControllerBase
 {
     [HttpGet("movies")]
@@ -17,7 +19,7 @@ public class MovieController(MoviesService moviesService) : ControllerBase
         int? pageNumber,
         int? pageSize)
     {
-        var movies = moviesService.GetAllMovie(
+        var movies = moviesService.GetAllMovieV1(
             sortBy,
             sortOrder,
             year,

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using MyMovies.Data;
@@ -31,9 +32,27 @@ public class Startup
         // Configure the Services
         services.AddTransient<MoviesService>();
         services.AddTransient<DirectorService>();
+        services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+            }).AddMvc()
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
-        services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title = "my_books", Version = "v1" }); });
+
+        services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "MyMovies", Version = "v1" });
+            c.SwaggerDoc("v2", new OpenApiInfo { Title = "MyMovies", Version = "v2" });
+            c.OperationFilter<SwaggerDefaultValues>();
+        });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -45,7 +64,11 @@ public class Startup
         {
             // app.UseDeveloperExceptionPage();
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "my_books v1"));
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyMovies v1");
+                c.SwaggerEndpoint("/swagger/v2/swagger.json", "MyMovies v2");
+            });
         }
 
         app.UseHttpsRedirection();

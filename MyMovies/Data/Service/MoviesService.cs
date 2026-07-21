@@ -6,9 +6,9 @@ using MyMovies.Exception;
 
 namespace MyMovies.Data.Service;
 
-public class MoviesService(AppDbContext _context)
+public class MoviesService(AppDbContext context)
 {
-    public MovieResponseVM AddMovie(MovieVM movie)
+    public MovieResponseV2VM AddMovie(MovieVM movie)
     {
         var newMovie = new Movie
         {
@@ -17,12 +17,12 @@ public class MoviesService(AppDbContext _context)
             Rating = movie.Rating,
             DirectorId = movie.DirectorId
         };
-        _context.Movies.Add(newMovie);
-        _context.SaveChanges();
+        context.Movies.Add(newMovie);
+        context.SaveChanges();
 
-        _context.Entry(newMovie).Reference(m => m.Director).Load();
+        context.Entry(newMovie).Reference(m => m.Director).Load();
 
-        return new MovieResponseVM
+        return new MovieResponseV2VM
         {
             Id = newMovie.Id,
             Title = newMovie.Title,
@@ -36,7 +36,7 @@ public class MoviesService(AppDbContext _context)
         };
     }
 
-    public List<MovieResponseVM> GetAllMovie(
+    public List<MovieResponseV1VM> GetAllMovieV1(
         string? sortBy,
         string? sortOrder,
         int? year,
@@ -44,7 +44,7 @@ public class MoviesService(AppDbContext _context)
         int? pageNumber,
         int? pageSize)
     {
-        var allMovie = _context
+        var allMovie = context
             .Movies
             .Include(movie => movie.Director)
             .AsQueryable();
@@ -79,7 +79,61 @@ public class MoviesService(AppDbContext _context)
         }
 
         var result = allMovie.Select(movie =>
-            new MovieResponseVM
+            new MovieResponseV1VM
+            {
+                Id = movie.Id,
+                Title = movie.Title,
+                Year = movie.Year,
+            });
+
+
+        return PaginatedList<MovieResponseV1VM>.Create(result, pageNumber ?? 1, pageSize ?? 5);
+    }
+
+    public List<MovieResponseV2VM> GetAllMovieV2(
+        string? sortBy,
+        string? sortOrder,
+        int? year,
+        double? minRating,
+        int? pageNumber,
+        int? pageSize)
+    {
+        var allMovie = context
+            .Movies
+            .Include(movie => movie.Director)
+            .AsQueryable();
+
+
+        if (year != null) allMovie = allMovie.Where(movie => movie.Year == year);
+
+        if (minRating != null) allMovie = allMovie.Where(movie => movie.Rating > minRating);
+
+        if (sortBy != null && sortOrder != null)
+        {
+            if (sortOrder == "desc")
+                switch (sortBy)
+                {
+                    case "title":
+                        allMovie = allMovie.OrderByDescending(movie => movie.Title);
+                        break;
+                    case "rating":
+                        allMovie = allMovie.OrderByDescending(movie => movie.Rating);
+                        break;
+                }
+            else if (sortOrder == "asc")
+                switch (sortBy)
+                {
+                    case "title":
+                        allMovie = allMovie.OrderBy(movie => movie.Title);
+                        break;
+                    case "rating":
+                        allMovie = allMovie.OrderBy(movie => movie.Rating);
+                        break;
+                }
+        }
+
+        var result = allMovie.Select(movie =>
+            new MovieResponseV2VM
             {
                 Id = movie.Id,
                 Title = movie.Title,
@@ -93,15 +147,15 @@ public class MoviesService(AppDbContext _context)
             });
 
 
-        return PaginatedList<MovieResponseVM>.Create(result, pageNumber ?? 1, pageSize ?? 5);
+        return PaginatedList<MovieResponseV2VM>.Create(result, pageNumber ?? 1, pageSize ?? 5);
     }
 
-    public MovieResponseVM GetMovieById(int movieId)
+    public MovieResponseV2VM GetMovieById(int movieId)
     {
-        var movie = _context.Movies.Include(movie => movie.Director).FirstOrDefault(m => m.Id == movieId);
+        var movie = context.Movies.Include(movie => movie.Director).FirstOrDefault(m => m.Id == movieId);
         return movie == null
             ? throw new NotFoundException($"Movie with id {movieId} not found")
-            : new MovieResponseVM
+            : new MovieResponseV2VM
             {
                 Id = movie.Id,
                 Title = movie.Title,
@@ -119,12 +173,12 @@ public class MoviesService(AppDbContext _context)
     {
         var movie = _getMovieById(movieId);
         if (movie == null) throw new NotFoundException($"Movie with id {movieId} not found");
-        _context.Movies.Remove(movie);
-        _context.SaveChanges();
+        context.Movies.Remove(movie);
+        context.SaveChanges();
     }
 
 
-    public MovieResponseVM UpdateMovie(int movieId, MovieVM updatedMovie)
+    public MovieResponseV2VM UpdateMovie(int movieId, MovieVM updatedMovie)
     {
         var movie = _getMovieById(movieId);
         if (movie == null) throw new NotFoundException($"Movie with id {movieId} not found");
@@ -134,12 +188,12 @@ public class MoviesService(AppDbContext _context)
         movie.DirectorId = updatedMovie.DirectorId;
         movie.Rating = updatedMovie.Rating;
 
-        _context.SaveChanges();
-        movie = _context.Movies
+        context.SaveChanges();
+        movie = context.Movies
             .Include(m => m.Director)
             .FirstOrDefault(m => m.Id == movieId);
 
-        return new MovieResponseVM
+        return new MovieResponseV2VM
         {
             Id = movie!.Id,
             Title = movie.Title,
@@ -155,6 +209,6 @@ public class MoviesService(AppDbContext _context)
 
     private Movie? _getMovieById(int movieId)
     {
-        return _context.Movies.FirstOrDefault(m => m.Id == movieId);
+        return context.Movies.FirstOrDefault(m => m.Id == movieId);
     }
 }

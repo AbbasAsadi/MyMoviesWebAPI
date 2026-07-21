@@ -1,6 +1,6 @@
 namespace MyMovies.Data.ViewModels;
 
-public class MovieResponseVM
+public class MovieResponseV2VM
 {
     public int Id { get; set; }
     public string Title { get; set; }
